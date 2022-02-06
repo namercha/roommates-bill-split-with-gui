@@ -1,6 +1,7 @@
 from flask.views import MethodView
 from wtforms import Form, StringField, SubmitField
 from flask import Flask, render_template, request
+from roommates_bill import room
 
 app = Flask(__name__)
 
@@ -22,19 +23,33 @@ class ResultsPage(MethodView):
 
     def post(self):
         billform = BillForm(request.form)
-        amount = billform.amount.data
-        return amount
+        amount = float(billform.amount.data)
+        period = billform.period.data
+        the_bill = room.Bill(amount, period)
+
+        name1 = billform.name1.data
+        days_in_house_1 = float(billform.days_in_house1.data)
+        roommate1 = room.Roommate(name1, days_in_house_1)
+
+        name2 = billform.name2.data
+        days_in_house_2 = float(billform.days_in_house2.data)
+        roommate2 = room.Roommate(name2, days_in_house_2)
+        return render_template('results.html',
+                               name1=roommate1.name, 
+                               amount1=roommate1.pays(the_bill, roommate2),
+                               name2=roommate2.name,
+                               amount2=roommate2.pays(the_bill, roommate1))
 
 
 class BillForm(Form):
-    amount = StringField("Bill Amount: ")
-    period = StringField("Bill Period: ")
+    amount = StringField("Bill Amount: ", default="100")
+    period = StringField("Bill Period: ", default="December 2021")
 
-    name1 = StringField("Name: ")
-    days_in_house1 = StringField("Days in the house: ")
+    name1 = StringField("Name: ", default="John")
+    days_in_house1 = StringField("Days in the house: ", default=20)
 
-    name2 = StringField("Name: ")
-    days_in_house2 = StringField("Days in the house: ")
+    name2 = StringField("Name: ", default="Mary")
+    days_in_house2 = StringField("Days in the house: ", default=12)
 
     button = SubmitField("Calculate")
 
